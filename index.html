@@ -1,0 +1,2175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WAT — Web Analyzer Tool</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #080a0f;
+  --bg2:      #0d1017;
+  --bg3:      #121520;
+  --bg4:      #181d2a;
+  --bg5:      #1e2435;
+  --border:   #1f2638;
+  --border2:  #2a3348;
+  --text:     #dde3f0;
+  --text2:    #7a88a8;
+  --text3:    #3d4d6a;
+  --bolt:     #e8ff47;
+  --bolt2:    #c8e000;
+  --bolt-bg:  rgba(232,255,71,0.06);
+  --bolt-glow:rgba(232,255,71,0.12);
+  --blue:     #4d9fff;
+  --blue-bg:  rgba(77,159,255,0.08);
+  --cyan:     #00d4c8;
+  --cyan-bg:  rgba(0,212,200,0.07);
+  --purple:   #a78bfa;
+  --purple-bg:rgba(167,139,250,0.08);
+  --green:    #34d399;
+  --green-bg: rgba(52,211,153,0.08);
+  --red:      #f87171;
+  --red-bg:   rgba(248,113,113,0.07);
+  --orange:   #fb923c;
+  --orange-bg:rgba(251,146,60,0.08);
+  --font-ui:  'Syne', sans-serif;
+  --font-mono:'IBM Plex Mono', monospace;
+  --r:        6px;
+  --r2:       10px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-ui);
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-size: 13px;
+}
+
+/* ── TOPBAR ─────────────────────────────── */
+#topbar {
+  height: 44px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  gap: 12px;
+  flex-shrink: 0;
+  z-index: 100;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+}
+
+.logo-icon {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.logo-text {
+  font-family: var(--font-ui);
+  font-weight: 800;
+  font-size: 16px;
+  letter-spacing: -0.5px;
+  color: var(--bolt);
+  line-height: 1;
+}
+.logo-sub {
+  font-size: 9px;
+  color: var(--text3);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-family: var(--font-mono);
+  font-weight: 400;
+}
+
+.topbar-sep {
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+}
+
+#file-badge {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--bolt);
+  background: var(--bolt-bg);
+  border: 1px solid rgba(232,255,71,0.15);
+  padding: 3px 8px;
+  border-radius: 4px;
+  display: none;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topbar-actions { display: flex; gap: 6px; margin-left: auto; align-items: center; }
+
+.btn {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: var(--r);
+  border: 1px solid var(--border2);
+  background: var(--bg3);
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.13s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  letter-spacing: 0.2px;
+}
+.btn:hover { background: var(--bg4); color: var(--text); border-color: var(--border2); }
+.btn.primary { background: var(--bolt); border-color: var(--bolt); color: #080a0f; font-weight: 700; }
+.btn.primary:hover { background: var(--bolt2); }
+.btn.ghost { background: transparent; border-color: transparent; }
+.btn.ghost:hover { background: var(--bg3); border-color: var(--border); }
+.btn.danger { color: var(--red); border-color: rgba(248,113,113,0.25); background: var(--red-bg); }
+.btn.danger:hover { background: rgba(248,113,113,0.15); }
+.btn:disabled { opacity: 0.3; cursor: not-allowed; pointer-events: none; }
+
+/* ── TABS ─────────────────────────────── */
+#tab-bar {
+  height: 36px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: flex-end;
+  padding: 0 14px;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.tab {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  border-radius: var(--r) var(--r) 0 0;
+  cursor: pointer;
+  color: var(--text3);
+  border: 1px solid transparent;
+  border-bottom: none;
+  transition: all 0.13s;
+  user-select: none;
+}
+.tab:hover { color: var(--text2); background: var(--bg3); }
+.tab.active {
+  color: var(--bolt);
+  background: var(--bg);
+  border-color: var(--border);
+  border-bottom-color: var(--bg);
+  margin-bottom: -1px;
+}
+
+/* ── LAYOUT ─────────────────────────────── */
+#main { display: flex; flex: 1; overflow: hidden; position: relative; }
+
+/* ── SIDEBAR ─────────────────────────────── */
+#sidebar {
+  width: 200px;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: none;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.sidebar-head {
+  padding: 10px 12px 6px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text3);
+  font-family: var(--font-mono);
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-scroll { flex: 1; overflow-y: auto; }
+.sidebar-scroll::-webkit-scrollbar { width: 3px; }
+.sidebar-scroll::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+.chunk-group { border-bottom: 1px solid var(--border); }
+.chunk-group-label {
+  font-size: 9px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text3);
+  padding: 8px 12px 4px;
+  font-family: var(--font-mono);
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text2);
+  cursor: pointer;
+  border-left: 2px solid transparent;
+  transition: all 0.1s;
+  user-select: none;
+}
+.sidebar-item:hover { background: var(--bg3); color: var(--text); }
+.sidebar-item.active {
+  background: var(--bolt-bg);
+  color: var(--bolt);
+  border-left-color: var(--bolt);
+}
+
+.sidebar-badge {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text3);
+  background: var(--bg4);
+  padding: 1px 5px;
+  border-radius: 3px;
+  min-width: 24px;
+  text-align: center;
+}
+.sidebar-item.active .sidebar-badge {
+  background: rgba(232,255,71,0.12);
+  color: var(--bolt);
+}
+
+.chunk-icon {
+  width: 16px;
+  text-align: center;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+/* ── CONTENT ─────────────────────────────── */
+#content {
+  flex: 1;
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* ── TOOLBAR ─────────────────────────────── */
+#toolbar {
+  height: 38px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.search-wrap { position: relative; flex: 1; max-width: 280px; }
+.search-wrap input {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 5px 10px 5px 30px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.search-wrap input:focus { border-color: var(--bolt); }
+.search-wrap input::placeholder { color: var(--text3); }
+.search-icon {
+  position: absolute;
+  left: 9px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text3);
+  pointer-events: none;
+  font-size: 12px;
+}
+
+.toolbar-sep { width: 1px; height: 18px; background: var(--border); margin: 0 2px; }
+.info-pill {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text3);
+  margin-left: auto;
+  background: var(--bg3);
+  padding: 3px 8px;
+  border-radius: var(--r);
+  border: 1px solid var(--border);
+}
+
+/* ── CHUNK HEADER ─────────────────────────── */
+.chunk-bar {
+  padding: 5px 12px;
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text3);
+  flex-shrink: 0;
+}
+.chunk-bar-name { color: var(--bolt); font-weight: 600; font-size: 11px; }
+.chunk-bar-tag {
+  background: var(--bg4);
+  padding: 1px 6px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+}
+
+/* ── TABLE ─────────────────────────────── */
+#table-wrap {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+#table-wrap::-webkit-scrollbar { width: 5px; }
+#table-wrap::-webkit-scrollbar-track { background: transparent; }
+#table-wrap::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+#data-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+#data-table thead { position: sticky; top: 0; z-index: 10; }
+#data-table th {
+  background: var(--bg2);
+  color: var(--text3);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 7px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  user-select: none;
+}
+#data-table td {
+  padding: 6px 12px;
+  border-bottom: 1px solid rgba(31,38,56,0.6);
+  vertical-align: middle;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+#data-table tr { transition: background 0.07s; cursor: pointer; }
+#data-table tr:hover td { background: var(--bg3); }
+#data-table tr.selected td { background: rgba(232,255,71,0.04); }
+#data-table tr.modified td { background: rgba(251,146,60,0.03); }
+#data-table tr.modified td:first-child { border-left: 2px solid var(--orange); }
+
+.cell-idx { color: var(--text3); width: 48px; font-size: 10px; }
+.cell-name { color: var(--cyan); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 190px; }
+.cell-val { color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 0; }
+.cell-type { width: 72px; }
+.cell-act { width: 56px; text-align: right; }
+
+.type-badge {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  text-transform: uppercase;
+}
+.type-string  { background: rgba(77,159,255,0.1);   color: var(--blue);   }
+.type-number  { background: rgba(0,212,200,0.08);    color: var(--cyan);   }
+.type-texture { background: rgba(167,139,250,0.1);   color: var(--purple); }
+.type-sprite  { background: rgba(251,146,60,0.1);    color: var(--orange); }
+.type-audio   { background: rgba(52,211,153,0.08);   color: var(--green);  }
+.type-object  { background: rgba(248,113,113,0.08);  color: var(--red);    }
+
+.row-btn {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1px solid var(--border2);
+  background: transparent;
+  color: var(--text3);
+  cursor: pointer;
+  opacity: 0;
+  transition: all 0.1s;
+}
+tr:hover .row-btn { opacity: 1; }
+.row-btn:hover { background: var(--bolt); border-color: var(--bolt); color: #080a0f; }
+
+/* ── EDITOR PANEL ─────────────────────────── */
+#editor-panel {
+  width: 300px;
+  background: var(--bg2);
+  border-left: 1px solid var(--border);
+  display: none;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.editor-head {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.editor-head-info { flex: 1; min-width: 0; }
+.editor-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.editor-meta {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text3);
+  margin-top: 2px;
+}
+
+.editor-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.editor-body::-webkit-scrollbar { width: 3px; }
+.editor-body::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+.field { display: flex; flex-direction: column; gap: 3px; }
+.field-label {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text3);
+  font-family: var(--font-mono);
+}
+.field-input {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 6px 9px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.13s;
+  resize: vertical;
+}
+.field-input:focus { border-color: var(--bolt); }
+.field-input::placeholder { color: var(--text3); }
+textarea.field-input { min-height: 72px; line-height: 1.5; }
+.field-input.readonly { opacity: 0.45; cursor: not-allowed; }
+
+.mod-banner {
+  display: none;
+  background: rgba(251,146,60,0.08);
+  border: 1px solid rgba(251,146,60,0.2);
+  border-radius: var(--r);
+  padding: 5px 8px;
+  font-size: 10px;
+  color: var(--orange);
+  font-family: var(--font-mono);
+  align-items: center;
+  gap: 5px;
+}
+.mod-banner.show { display: flex; }
+
+.hex-block {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text3);
+  word-break: break-all;
+  line-height: 1.8;
+}
+.hex-byte { display: inline-block; width: 22px; }
+.hex-byte:nth-child(8n) { margin-right: 8px; }
+
+.info-block {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 8px 10px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text2);
+  line-height: 1.8;
+}
+.info-block b { color: var(--text); font-weight: 500; }
+
+.preview-box {
+  background: #050608;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80px;
+  overflow: hidden;
+}
+.preview-box canvas {
+  max-width: 100%;
+  max-height: 180px;
+  image-rendering: pixelated;
+  object-fit: contain;
+}
+
+.editor-foot {
+  padding: 8px 12px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+/* ── TEXTURE GALLERY ─────────────────────── */
+#gallery-view {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: none;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-content: flex-start;
+}
+#gallery-view::-webkit-scrollbar { width: 5px; }
+#gallery-view::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+.gallery-item {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--r2);
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  flex-direction: column;
+  width: calc(25% - 6px);
+  min-width: 120px;
+}
+.gallery-item:hover { border-color: var(--bolt); transform: translateY(-1px); box-shadow: 0 4px 20px rgba(232,255,71,0.08); }
+.gallery-img-wrap {
+  background: #050608;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100px;
+  overflow: hidden;
+}
+.gallery-img-wrap img { max-width: 100%; max-height: 100%; image-rendering: pixelated; object-fit: contain; }
+.gallery-label {
+  padding: 5px 8px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text3);
+  border-top: 1px solid var(--border);
+}
+
+/* ── DIFF VIEW ─────────────────────────────── */
+#diff-view {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+}
+#diff-view::-webkit-scrollbar { width: 5px; }
+#diff-view::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+.diff-dropzone {
+  border: 1px dashed var(--border2);
+  border-radius: var(--r2);
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-size: 12px;
+  color: var(--text3);
+}
+.diff-dropzone:hover { border-color: var(--bolt); color: var(--bolt); background: var(--bolt-bg); }
+.diff-dropzone.loaded { border-color: var(--green); color: var(--green); background: var(--green-bg); }
+
+.diff-result { display: flex; flex-direction: column; gap: 6px; }
+.diff-row {
+  display: flex;
+  gap: 0;
+  border-radius: var(--r);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+.diff-cell {
+  flex: 1;
+  padding: 5px 8px;
+  line-height: 1.6;
+  word-break: break-all;
+}
+.diff-cell.removed { background: var(--red-bg); color: var(--red); }
+.diff-cell.added   { background: var(--green-bg); color: var(--green); }
+.diff-cell.label   { flex: 0 0 120px; background: var(--bg3); color: var(--text3); border-right: 1px solid var(--border); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── GML CODE VIEW ─────────────────────────── */
+#code-view {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+}
+.code-block {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--r2);
+  overflow: hidden;
+}
+.code-block-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg4);
+}
+.code-block-name { font-weight: 700; font-size: 12px; color: var(--text); }
+.code-block-meta { font-family: var(--font-mono); font-size: 9px; color: var(--text3); }
+.code-body {
+  padding: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text2);
+  line-height: 1.8;
+  overflow-x: auto;
+  white-space: pre;
+}
+.gml-kw { color: var(--purple); }
+.gml-num { color: var(--cyan); }
+.gml-str { color: var(--green); }
+.gml-fn  { color: var(--blue); }
+.gml-op  { color: var(--bolt); }
+.gml-cmt { color: var(--text3); font-style: italic; }
+.gml-line-num { color: var(--text3); user-select: none; display: inline-block; width: 32px; text-align: right; margin-right: 12px; border-right: 1px solid var(--border); padding-right: 8px; }
+
+/* ── OVERVIEW ─────────────────────────────── */
+#overview-view {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: none;
+  flex-direction: column;
+  gap: 16px;
+}
+#overview-view::-webkit-scrollbar { width: 5px; }
+#overview-view::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+.overview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+}
+.ov-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--r2);
+  padding: 14px 16px;
+  transition: border-color 0.15s;
+}
+.ov-card:hover { border-color: var(--border2); }
+.ov-card-icon { font-size: 20px; margin-bottom: 8px; }
+.ov-card-label { font-size: 10px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text3); font-family: var(--font-mono); }
+.ov-card-value { font-size: 22px; font-weight: 800; color: var(--text); margin-top: 2px; letter-spacing: -1px; }
+.ov-card-sub { font-size: 10px; color: var(--text3); font-family: var(--font-mono); margin-top: 2px; }
+
+.ov-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text3);
+  font-family: var(--font-mono);
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.gen8-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--border);
+  border-radius: var(--r2);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.gen8-cell {
+  background: var(--bg2);
+  padding: 10px 14px;
+}
+.gen8-key { font-family: var(--font-mono); font-size: 9px; color: var(--text3); margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+.gen8-val { font-family: var(--font-mono); font-size: 12px; color: var(--text); font-weight: 500; }
+
+.chunk-map { display: flex; flex-wrap: wrap; gap: 4px; }
+.chunk-pill {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: var(--r);
+  border: 1px solid var(--border);
+  background: var(--bg3);
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.1s;
+}
+.chunk-pill:hover { border-color: var(--bolt); color: var(--bolt); background: var(--bolt-bg); }
+
+/* ── WELCOME ─────────────────────────────── */
+#welcome {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 0;
+  text-align: center;
+  padding: 40px;
+  background: var(--bg);
+  z-index: 10;
+}
+
+.welcome-logo {
+  font-size: 52px;
+  font-weight: 800;
+  letter-spacing: -3px;
+  color: var(--bolt);
+  line-height: 1;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.welcome-sub {
+  font-size: 13px;
+  color: var(--text2);
+  max-width: 380px;
+  line-height: 1.6;
+  margin-bottom: 20px;
+  font-weight: 400;
+}
+.welcome-chips {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.welcome-chip {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text3);
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+.welcome-drop {
+  border: 1px solid var(--border2);
+  border-radius: var(--r2);
+  padding: 20px 32px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: var(--bg2);
+}
+.welcome-drop:hover {
+  border-color: var(--bolt);
+  background: var(--bolt-bg);
+}
+.welcome-drop-text { text-align: left; }
+.welcome-drop-title { font-size: 14px; font-weight: 700; color: var(--bolt); }
+.welcome-drop-sub { font-size: 11px; color: var(--text3); margin-top: 3px; font-family: var(--font-mono); }
+
+.welcome-features {
+  display: flex;
+  gap: 8px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 440px;
+}
+.welcome-feature {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 6px 10px;
+  font-size: 11px;
+  color: var(--text3);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* ── DROPZONE OVERLAY ─────────────────────── */
+#dropzone {
+  position: fixed;
+  inset: 0;
+  background: rgba(8,10,15,0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 500;
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+}
+#dropzone.active { opacity: 1; pointer-events: all; }
+.dz-inner {
+  border: 2px dashed var(--bolt);
+  border-radius: var(--r2);
+  padding: 48px 72px;
+  text-align: center;
+}
+.dz-title { font-size: 20px; font-weight: 800; color: var(--bolt); margin-bottom: 6px; }
+.dz-sub { font-size: 12px; color: var(--text2); font-family: var(--font-mono); }
+
+/* ── NO RESULTS ─────────────────────────── */
+#no-results {
+  padding: 40px;
+  text-align: center;
+  color: var(--text3);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  display: none;
+}
+
+/* ── STATUSBAR ─────────────────────────── */
+#statusbar {
+  height: 22px;
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 14px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--text3);
+  flex-shrink: 0;
+}
+.stat { display: flex; align-items: center; gap: 4px; }
+.dot { width: 5px; height: 5px; border-radius: 50%; background: var(--text3); }
+.dot.green { background: var(--green); }
+.dot.yellow { background: var(--orange); }
+
+/* ── NOTIFICATIONS ─────────────────────── */
+#notif { position: fixed; top: 52px; right: 10px; z-index: 999; display: flex; flex-direction: column; gap: 5px; }
+.notif {
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  padding: 7px 10px;
+  font-size: 11px;
+  color: var(--text);
+  max-width: 240px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-mono);
+  animation: nIn 0.18s ease;
+}
+.notif.ok  { border-color: rgba(52,211,153,0.3); }
+.notif.err { border-color: rgba(248,113,113,0.3); }
+.notif.warn { border-color: rgba(251,146,60,0.3); }
+@keyframes nIn { from { opacity:0; transform: translateX(12px); } }
+
+/* ── SCROLLBARS ─────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div id="topbar">
+  <div class="logo">
+    <svg class="logo-icon" viewBox="0 0 28 28" fill="none">
+      <rect width="28" height="28" rx="6" fill="#e8ff47" fill-opacity="0.08"/>
+      <path d="M16 3L6 16h8l-2 9L22 12h-8l2-9z" fill="#e8ff47" stroke="#e8ff47" stroke-width="0.5" stroke-linejoin="round"/>
+    </svg>
+    <div>
+      <div class="logo-text">WAT</div>
+      <div class="logo-sub">Analyzer</div>
+    </div>
+  </div>
+  <div class="topbar-sep"></div>
+  <span id="file-badge">no file</span>
+  <div class="topbar-actions">
+    <button class="btn" onclick="triggerOpen()">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 4h4l2-2h6a1 1 0 011 1v9a1 1 0 01-1 1H2a1 1 0 01-1-1V5a1 1 0 011-1z"/></svg>
+      Open file
+    </button>
+    <button class="btn" id="btn-export-json" onclick="exportJSON()" disabled>
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="2" width="12" height="12" rx="1"/><path d="M5 8h6M8 5v6"/></svg>
+      JSON
+    </button>
+    <button class="btn" id="btn-save" onclick="exportFile()" disabled>
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M13 14H3a1 1 0 01-1-1V3a1 1 0 011-1h7l3 3v9a1 1 0 01-1 1z"/><path d="M5 14V9h6v5M5 2v4h5"/></svg>
+      Export
+    </button>
+    <button class="btn danger" id="btn-close" onclick="closeFile()" disabled>Close</button>
+  </div>
+</div>
+
+<!-- TAB BAR (hidden until file loaded) -->
+<div id="tab-bar" style="display:none;">
+  <div class="tab active" data-tab="chunks" onclick="switchTab('chunks')">Chunks</div>
+  <div class="tab" data-tab="overview" onclick="switchTab('overview')">Overview</div>
+  <div class="tab" data-tab="gallery" onclick="switchTab('gallery')">Textures</div>
+  <div class="tab" data-tab="code" onclick="switchTab('code')">GML</div>
+  <div class="tab" data-tab="diff" onclick="switchTab('diff')">Diff</div>
+</div>
+
+<div id="main">
+
+  <!-- WELCOME -->
+  <div id="welcome">
+    <div class="welcome-logo">
+      <svg width="48" height="48" viewBox="0 0 28 28" fill="none">
+        <path d="M16 2L5 16h9l-2 10L23 12h-9l2-10z" fill="#e8ff47" stroke="#e8ff47" stroke-width="0.3" stroke-linejoin="round"/>
+      </svg>
+      WAT
+    </div>
+    <div class="welcome-sub">Web Analyzer Tool — inspect GameMaker data files entirely in your browser. Nothing leaves your machine.</div>
+    <div class="welcome-chips">
+      <span class="welcome-chip">data.win</span>
+      <span class="welcome-chip">game.unx</span>
+      <span class="welcome-chip">game.ios</span>
+      <span class="welcome-chip">game.droid</span>
+      <span class="welcome-chip">*.wolf</span>
+    </div>
+    <div class="welcome-drop" onclick="triggerOpen()">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#e8ff47" stroke-width="1.4" opacity="0.7"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <div class="welcome-drop-text">
+        <div class="welcome-drop-title">Drop or open data.win</div>
+        <div class="welcome-drop-sub">All GameMaker bytecode versions supported</div>
+      </div>
+    </div>
+    <div class="welcome-features">
+      <div class="welcome-feature"><span>⚡</span> Chunk browser</div>
+      <div class="welcome-feature"><span>🖼</span> Texture gallery</div>
+      <div class="welcome-feature"><span>📜</span> GML decompiler</div>
+      <div class="welcome-feature"><span>⚖</span> File diff</div>
+      <div class="welcome-feature"><span>↓</span> JSON export</div>
+      <div class="welcome-feature"><span>✏</span> String edit</div>
+    </div>
+  </div>
+
+  <!-- DROP OVERLAY -->
+  <div id="dropzone">
+    <div class="dz-inner">
+      <div class="dz-title">⚡ Drop file</div>
+      <div class="dz-sub">data.win · game.unx · game.ios · game.droid</div>
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+    <div class="sidebar-head">Chunks</div>
+    <div class="sidebar-scroll" id="chunk-list"></div>
+  </div>
+
+  <!-- CONTENT AREA -->
+  <div id="content">
+
+    <!-- TOOLBAR (chunks tab) -->
+    <div id="toolbar">
+      <div class="search-wrap">
+        <span class="search-icon">⌕</span>
+        <input type="text" id="search-input" placeholder="Search name or value…" oninput="filterTable()">
+      </div>
+      <div class="toolbar-sep"></div>
+      <button class="btn ghost" onclick="addEntry()" style="font-size:11px;padding:4px 9px;">+ Add</button>
+      <button class="btn ghost" id="btn-export-chunk" onclick="exportChunkJSON()" style="font-size:11px;padding:4px 9px;">⬇ chunk JSON</button>
+      <span class="info-pill" id="tab-info">0 entries</span>
+    </div>
+
+    <div id="chunk-bar" class="chunk-bar" style="display:none;">
+      <span class="chunk-bar-name" id="cb-name">—</span>
+      <span class="chunk-bar-tag" id="cb-count">0 items</span>
+      <span class="chunk-bar-tag" id="cb-offset">0x0</span>
+      <span class="chunk-bar-tag" id="cb-size">0 B</span>
+    </div>
+
+    <!-- TABLE VIEW -->
+    <div id="table-wrap">
+      <table id="data-table">
+        <thead>
+          <tr>
+            <th class="cell-idx">#</th>
+            <th class="cell-type">Type</th>
+            <th class="cell-name">Name / Key</th>
+            <th class="cell-val">Value</th>
+            <th class="cell-act"></th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+      <div id="no-results">No entries match</div>
+    </div>
+
+    <!-- OVERVIEW VIEW -->
+    <div id="overview-view">
+      <div class="ov-section-title">File info</div>
+      <div id="gen8-grid" class="gen8-grid"></div>
+      <div class="ov-section-title">Asset counts</div>
+      <div class="overview-grid" id="overview-grid"></div>
+      <div class="ov-section-title">Chunk map</div>
+      <div class="chunk-map" id="chunk-map-pills"></div>
+    </div>
+
+    <!-- GALLERY VIEW -->
+    <div id="gallery-view"></div>
+
+    <!-- CODE VIEW -->
+    <div id="code-view">
+      <div style="color:var(--text3);font-size:12px;font-family:var(--font-mono);padding:8px 0;">
+        Disassembled GML bytecode — read-only
+      </div>
+      <div id="code-blocks"></div>
+    </div>
+
+    <!-- DIFF VIEW -->
+    <div id="diff-view">
+      <div style="display:flex; gap:10px; margin-bottom:4px;">
+        <div style="flex:1;">
+          <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px;">File A (current)</div>
+          <div id="diff-a-zone" class="diff-dropzone loaded" style="cursor:default;">
+            <span id="diff-a-name">current file</span>
+          </div>
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px;">File B</div>
+          <div id="diff-b-zone" class="diff-dropzone" onclick="loadDiffB()">
+            <span>Click to load second file…</span>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:8px;" id="diff-controls" style="display:none">
+        <select id="diff-chunk-sel" class="field-input" style="flex:1;background:var(--bg3);" onchange="runDiff()"></select>
+        <button class="btn primary" onclick="runDiff()">Compare</button>
+      </div>
+      <div id="diff-results" class="diff-result"></div>
+    </div>
+
+  </div>
+
+  <!-- EDITOR PANEL -->
+  <div id="editor-panel">
+    <div class="editor-head">
+      <div class="editor-head-info">
+        <div class="editor-title" id="editor-title">Entry editor</div>
+        <div class="editor-meta" id="editor-meta">Select a row to edit</div>
+      </div>
+      <button class="btn ghost" style="padding:3px 7px;font-size:11px;" onclick="closeEditor()">✕</button>
+    </div>
+    <div class="editor-body" id="editor-body">
+      <div style="text-align:center;padding:28px 16px;color:var(--text3);font-size:11px;font-family:var(--font-mono);">
+        Click any row to inspect
+      </div>
+    </div>
+    <div class="editor-foot" id="editor-foot" style="display:none;">
+      <button class="btn primary" style="flex:1;" onclick="saveEdit()">Save</button>
+      <button class="btn" onclick="discardEdit()">Discard</button>
+      <button class="btn danger" onclick="deleteEntry()" style="margin-left:auto;">Delete</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- STATUSBAR -->
+<div id="statusbar">
+  <div class="stat">
+    <div class="dot" id="status-dot"></div>
+    <span id="status-text">No file loaded</span>
+  </div>
+  <div class="stat" id="stat-mods" style="display:none;">
+    <div class="dot yellow"></div>
+    <span id="stat-mods-text">0 modifications</span>
+  </div>
+  <div class="stat" style="margin-left:auto;">
+    <span id="stat-size"></span>
+  </div>
+</div>
+
+<div id="notif"></div>
+<input type="file" id="file-input" style="display:none;" accept="*">
+
+<script>
+// ─────────────────────────────────────────────
+//  UTILS
+// ─────────────────────────────────────────────
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+function fmt(b) {
+  if (b < 1024) return `${b} B`;
+  if (b < 1048576) return `${(b/1024).toFixed(1)} KB`;
+  return `${(b/1048576).toFixed(1)} MB`;
+}
+
+function notify(msg, type = '') {
+  const el = document.createElement('div');
+  el.className = `notif ${type}`;
+  const icon = type === 'ok' ? '✓' : type === 'err' ? '✗' : type === 'warn' ? '⚠' : '◆';
+  el.innerHTML = `<span style="color:${type==='ok'?'var(--green)':type==='err'?'var(--red)':type==='warn'?'var(--orange)':'var(--text3)'}">${icon}</span>${esc(msg)}`;
+  document.getElementById('notif').appendChild(el);
+  setTimeout(() => el.remove(), 3200);
+}
+
+// ─────────────────────────────────────────────
+//  STATE
+// ─────────────────────────────────────────────
+const S = {
+  rawBuffer: null, chunks: {}, parsed: {},
+  activeChunk: null, entries: [], filtered: [],
+  selected: null, editBuf: {}, mods: {},
+  fileName: '', fileSize: 0, texUrls: [],
+  diffB: null, diffBName: '',
+  activeTab: 'chunks'
+};
+
+// ─────────────────────────────────────────────
+//  FILE OPEN
+// ─────────────────────────────────────────────
+function triggerOpen() { document.getElementById('file-input').click(); }
+
+document.getElementById('file-input').addEventListener('change', e => {
+  if (e.target.files[0]) loadFile(e.target.files[0]);
+  e.target.value = '';
+});
+
+document.addEventListener('dragover', e => { e.preventDefault(); document.getElementById('dropzone').classList.add('active'); });
+document.addEventListener('dragleave', e => { if (!e.relatedTarget) document.getElementById('dropzone').classList.remove('active'); });
+document.addEventListener('drop', e => {
+  e.preventDefault();
+  document.getElementById('dropzone').classList.remove('active');
+  const f = e.dataTransfer.files[0];
+  if (f) loadFile(f);
+});
+
+function loadFile(file) {
+  notify(`Loading ${file.name} (${fmt(file.size)})…`);
+  const reader = new FileReader();
+  reader.onload = e => {
+    S.rawBuffer = e.target.result;
+    S.fileName  = file.name;
+    S.fileSize  = file.size;
+    parseDataWin(e.target.result);
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ─────────────────────────────────────────────
+//  PARSER
+// ─────────────────────────────────────────────
+function parseDataWin(buf) {
+  const view = new DataView(buf);
+  const u8   = new Uint8Array(buf);
+
+  function strAt(off) {
+    if (off >= u8.length) return '';
+    let e = off;
+    while (e < u8.length && u8[e] !== 0) e++;
+    return new TextDecoder().decode(u8.slice(off, e));
+  }
+
+  const magic = String.fromCharCode(u8[0],u8[1],u8[2],u8[3]);
+  if (magic !== 'FORM') notify('File does not start with FORM — attempting anyway', 'warn');
+
+  const chunks = {};
+  let pos = 8;
+  while (pos < buf.byteLength - 8) {
+    try {
+      const name = String.fromCharCode(u8[pos],u8[pos+1],u8[pos+2],u8[pos+3]);
+      const len  = view.getUint32(pos + 4, true);
+      if (!len || len > buf.byteLength || !/^[A-Z0-9]{4}$/.test(name)) break;
+      chunks[name] = { offset: pos + 8, length: len, raw: buf.slice(pos + 8, pos + 8 + len) };
+      pos += 8 + len;
+    } catch { break; }
+  }
+
+  if (!Object.keys(chunks).length) { notify('Could not parse chunks — unsupported format?', 'err'); return; }
+
+  S.chunks = chunks;
+  S.mods   = {};
+  S.texUrls = [];
+
+  parseAll(chunks, view, u8, strAt);
+  buildUI();
+  notify(`Loaded ${S.fileName} — ${Object.keys(chunks).length} chunks`, 'ok');
+}
+
+function parseAll(chunks, view, u8, strAt) {
+  S.parsed = {};
+
+  // TXTR — texture sheets
+  if (chunks['TXTR']) {
+    const base  = chunks['TXTR'].offset;
+    const count = view.getUint32(base, true);
+    for (let i = 0; i < count && i < 1000; i++) {
+      const pOff = base + 4 + i * 4;
+      if (pOff + 4 > u8.length) break;
+      const eOff = view.getUint32(pOff, true);
+      if (eOff + 8 > u8.length) break;
+      const pngPtr = view.getUint32(eOff + 4, true);
+      let pngEnd = pngPtr;
+      while (pngEnd < u8.length - 8) {
+        if (u8[pngEnd]===0x49&&u8[pngEnd+1]===0x45&&u8[pngEnd+2]===0x4E&&u8[pngEnd+3]===0x44) { pngEnd+=8; break; }
+        pngEnd++;
+      }
+      if (pngEnd > pngPtr && pngEnd <= u8.length) {
+        const blob = new Blob([S.rawBuffer.slice(pngPtr, pngEnd)], { type:'image/png' });
+        S.texUrls[i] = URL.createObjectURL(blob);
+      }
+    }
+  }
+
+  // STRG
+  if (chunks['STRG']) {
+    const base = chunks['STRG'].offset;
+    const count = view.getUint32(base, true);
+    const out = [];
+    for (let i = 0; i < count && i < 200000; i++) {
+      const pOff = base + 4 + i * 4;
+      if (pOff + 4 > u8.length) break;
+      const sPtr = view.getUint32(pOff, true);
+      if (sPtr + 4 >= u8.length) break;
+      const sLen = view.getUint32(sPtr, true);
+      const val  = new TextDecoder().decode(u8.slice(sPtr + 4, sPtr + 4 + sLen));
+      out.push({ index:i, type:'string', name:`string_${i}`, value:val, offset:sPtr, _rawPtr:sPtr });
+    }
+    S.parsed['STRG'] = out;
+  }
+
+  // GEN8
+  if (chunks['GEN8']) {
+    const b = chunks['GEN8'].offset;
+    const gen = [
+      { index:0, type:'string', name:'game_name',        value: strAt(view.getUint32(b+4,true))  || '(unknown)' },
+      { index:1, type:'string', name:'config_name',      value: strAt(view.getUint32(b+8,true))  || '(default)' },
+      { index:2, type:'string', name:'version',          value: `${view.getUint32(b+24,true)}.${view.getUint32(b+28,true)}.${view.getUint32(b+32,true)}.${view.getUint32(b+36,true)}` },
+      { index:3, type:'number', name:'bytecode_version', value: String(u8[b+1]) },
+      { index:4, type:'number', name:'debug_disabled',   value: String(u8[b])   },
+      { index:5, type:'number', name:'default_resolution',value:`${view.getUint32(b+60,true)}×${view.getUint32(b+64,true)}` },
+    ];
+    S.parsed['GEN8'] = gen;
+  }
+
+  // SPRT
+  if (chunks['SPRT']) {
+    const base = chunks['SPRT'].offset;
+    const count = view.getUint32(base, true);
+    const out = [];
+    for (let i = 0; i < count && i < 50000; i++) {
+      const pOff = base + 4 + i * 4;
+      if (pOff + 4 > u8.length) break;
+      const eOff = view.getUint32(pOff, true);
+      if (eOff + 12 > u8.length) break;
+      const name = strAt(view.getUint32(eOff, true));
+      const w = view.getUint32(eOff+4,true), h = view.getUint32(eOff+8,true);
+      const fc = (eOff+56+4 <= u8.length) ? view.getUint32(eOff+56,true) : 0;
+      const tp = (fc > 0 && fc < 10000 && eOff+60+4 <= u8.length) ? view.getUint32(eOff+60,true) : 0;
+      out.push({ index:i, type:'sprite', name:name||`sprite_${i}`, value:`${w}×${h} · ${fc} frame${fc!==1?'s':''}`, offset:eOff, _w:w,_h:h,_tpagPtr:tp });
+    }
+    S.parsed['SPRT'] = out;
+  }
+
+  // OBJT
+  if (chunks['OBJT']) {
+    const base = chunks['OBJT'].offset;
+    const count = view.getUint32(base, true);
+    const out = [];
+    for (let i = 0; i < count && i < 50000; i++) {
+      const pOff = base + 4 + i * 4;
+      if (pOff + 4 > u8.length) break;
+      const eOff = view.getUint32(pOff, true);
+      if (eOff + 4 > u8.length) break;
+      const name = strAt(view.getUint32(eOff, true));
+      const si   = (eOff+8 <= u8.length) ? view.getInt32(eOff+4,true) : -1;
+      out.push({ index:i, type:'object', name:name||`obj_${i}`, value:`id:${i}${si>=0?` · sprite:${si}`:''}`, offset:eOff, _spriteIdx:si });
+    }
+    S.parsed['OBJT'] = out;
+  }
+
+  // ROOM
+  if (chunks['ROOM']) {
+    const base = chunks['ROOM'].offset;
+    const count = view.getUint32(base, true);
+    const out = [];
+    for (let i = 0; i < count && i < 10000; i++) {
+      const pOff = base + 4 + i * 4;
+      if (pOff + 4 > u8.length) break;
+      const eOff = view.getUint32(pOff, true);
+      if (eOff + 4 > u8.length) break;
+      const name = strAt(view.getUint32(eOff,true));
+      const w = view.getUint32(eOff+8,true), h = view.getUint32(eOff+12,true);
+      out.push({ index:i, type:'number', name:name||`room_${i}`, value:`${w}×${h}`, offset:eOff, _w:w,_h:h });
+    }
+    S.parsed['ROOM'] = out;
+  }
+
+  // TPAG
+  if (chunks['TPAG']) {
+    const base = chunks['TPAG'].offset;
+    const count = view.getUint32(base, true);
+    const out = [];
+    for (let i = 0; i < count && i < 50000; i++) {
+      const eOff = base + 4 + i * 22;
+      if (eOff + 22 > u8.length) break;
+      const x=view.getUint16(eOff,true),y=view.getUint16(eOff+2,true);
+      const w=view.getUint16(eOff+4,true),h=view.getUint16(eOff+6,true);
+      const ti=view.getUint16(eOff+20,true);
+      out.push({ index:i, type:'texture', name:`tpage_${i}`, value:`${x},${y}  ${w}×${h}  sheet:${ti}`, offset:eOff, _x:x,_y:y,_w:w,_h:h,_ti:ti });
+    }
+    S.parsed['TPAG'] = out;
+  }
+
+  // SOND
+  if (chunks['SOND']) {
+    const base = chunks['SOND'].offset;
+    const count = view.getUint32(base, true);
+    const out = [];
+    for (let i = 0; i < count && i < 50000; i++) {
+      const pOff = base + 4 + i * 4;
+      if (pOff + 4 > u8.length) break;
+      const eOff = view.getUint32(pOff, true);
+      if (eOff + 4 > u8.length) break;
+      const name = strAt(view.getUint32(eOff,true));
+      const flags = (eOff+8 <= u8.length) ? view.getUint32(eOff+4,true) : 0;
+      out.push({ index:i, type:'audio', name:name||`snd_${i}`, value:`flags:0x${flags.toString(16)}`, offset:eOff });
+    }
+    S.parsed['SOND'] = out;
+  }
+
+  // SCPT
+  if (chunks['SCPT']) {
+    const base = chunks['SCPT'].offset;
+    const count = view.getUint32(base, true);
+    const out = [];
+    for (let i = 0; i < count && i < 50000; i++) {
+      const pOff = base + 4 + i * 4;
+      if (pOff + 4 > u8.length) break;
+      const eOff = view.getUint32(pOff, true);
+      if (eOff + 8 > u8.length) break;
+      const name = strAt(view.getUint32(eOff,true));
+      const codeId = view.getUint32(eOff+4,true);
+      out.push({ index:i, type:'object', name:name||`script_${i}`, value:`codeId:${codeId}`, offset:eOff, _codeId:codeId });
+    }
+    S.parsed['SCPT'] = out;
+  }
+
+  // CODE — disassemble GML bytecode
+  if (chunks['CODE']) {
+    const base = chunks['CODE'].offset;
+    const count = view.getUint32(base, true);
+    const out = [];
+    for (let i = 0; i < count && i < 50000; i++) {
+      const pOff = base + 4 + i * 4;
+      if (pOff + 4 > u8.length) break;
+      const eOff = view.getUint32(pOff, true);
+      if (eOff + 8 > u8.length) break;
+      const namePtr = view.getUint32(eOff, true);
+      const name    = strAt(namePtr);
+      const byteLen = (eOff+4 <= u8.length) ? view.getUint32(eOff+4,true) : 0;
+      const instrOffset = eOff + 8;
+      const disasm = disassembleCode(view, u8, instrOffset, byteLen);
+      out.push({ index:i, type:'object', name:name||`code_${i}`, value:`${byteLen} bytes`, offset:eOff, _byteLen:byteLen, _disasm:disasm });
+    }
+    S.parsed['CODE'] = out;
+  }
+
+  // BGND
+  if (chunks['BGND']) {
+    const base = chunks['BGND'].offset;
+    const count = view.getUint32(base, true);
+    const out = [];
+    for (let i = 0; i < count && i < 50000; i++) {
+      const pOff = base + 4 + i * 4;
+      if (pOff + 4 > u8.length) break;
+      const eOff = view.getUint32(pOff, true);
+      if (eOff + 4 > u8.length) break;
+      const name = strAt(view.getUint32(eOff,true));
+      out.push({ index:i, type:'texture', name:name||`bg_${i}`, value:`bg_${i}`, offset:eOff });
+    }
+    S.parsed['BGND'] = out;
+  }
+
+  // FONT
+  if (chunks['FONT']) {
+    const base = chunks['FONT'].offset;
+    const count = view.getUint32(base, true);
+    const out = [];
+    for (let i = 0; i < count && i < 10000; i++) {
+      const pOff = base + 4 + i * 4;
+      if (pOff + 4 > u8.length) break;
+      const eOff = view.getUint32(pOff, true);
+      if (eOff + 8 > u8.length) break;
+      const name = strAt(view.getUint32(eOff,true));
+      const dispName = strAt(view.getUint32(eOff+4,true));
+      const sz = (eOff+12 <= u8.length) ? view.getUint32(eOff+8,true) : 0;
+      out.push({ index:i, type:'object', name:name||`font_${i}`, value:`"${dispName}" size:${sz}`, offset:eOff });
+    }
+    S.parsed['FONT'] = out;
+  }
+
+  // PATH
+  if (chunks['PATH']) {
+    const base = chunks['PATH'].offset;
+    const count = view.getUint32(base, true);
+    const out = [];
+    for (let i = 0; i < count && i < 10000; i++) {
+      const pOff = base + 4 + i * 4;
+      if (pOff + 4 > u8.length) break;
+      const eOff = view.getUint32(pOff, true);
+      if (eOff + 4 > u8.length) break;
+      const name = strAt(view.getUint32(eOff,true));
+      const pts = (eOff+16 <= u8.length) ? view.getUint32(eOff+12,true) : 0;
+      out.push({ index:i, type:'number', name:name||`path_${i}`, value:`${pts} points`, offset:eOff });
+    }
+    S.parsed['PATH'] = out;
+  }
+}
+
+// ─────────────────────────────────────────────
+//  GML DISASSEMBLER
+// ─────────────────────────────────────────────
+const GML_OPS = {
+  0xB6:'push',   0xB7:'pushl',  0xB8:'pushv',  0xB9:'pushbltin',
+  0x45:'pop',    0xF6:'popv',   0x84:'add',    0x85:'sub',
+  0x86:'mul',    0x87:'div',    0x88:'mod',    0x89:'neg',
+  0x8A:'and',    0x8B:'or',     0x8C:'xor',    0x8D:'not',
+  0x8E:'shl',    0x8F:'shr',    0x15:'set',    0xD9:'dup',
+  0xB4:'ret',    0xB3:'exit',   0xDA:'popz',
+  0x9D:'bf',     0x9E:'bt',     0x9C:'jump',   0x99:'push.e',
+  0xC0:'call',   0xF7:'callv',  0xC1:'break',
+};
+
+const GML_TYPES = {0:'double',1:'float',2:'int32',3:'int64',4:'bool',5:'var',6:'string',7:'inst',0xF:'undefined'};
+
+function disassembleCode(view, u8, base, byteLen) {
+  const lines = [];
+  const end   = Math.min(base + byteLen, u8.length);
+  let pos = base;
+  let lineNum = 0;
+
+  while (pos + 4 <= end && lineNum < 500) {
+    const word = view.getUint32(pos, true);
+    const op   = (word >> 24) & 0xFF;
+    const opName = GML_OPS[op] || `unk_${op.toString(16)}`;
+    const t1   = (word >> 16) & 0xF;
+    const t2   = (word >> 20) & 0xF;
+
+    let operand = '';
+    let advance = 4;
+
+    if (op === 0xB6 || op === 0xB7 || op === 0x99) {
+      // push with immediate
+      if (pos + 8 <= end) {
+        const t = (word >> 16) & 0xFF;
+        if (t === 2) { operand = `${view.getInt32(pos+4,true)}`; advance = 8; }
+        else if (t === 3) { operand = `${view.getInt32(pos+4,true)}.0`; advance = 8; }
+        else if (t === 6) {
+          const strIdx = view.getInt32(pos+4,true);
+          const sv = S.parsed['STRG'];
+          operand = sv && sv[strIdx] ? `"${sv[strIdx].value.slice(0,40)}"` : `str[${strIdx}]`;
+          advance = 8;
+        } else { advance = 8; operand = `(${GML_TYPES[t]||t})`; }
+      }
+    } else if (op === 0xC0) {
+      // call
+      if (pos + 8 <= end) {
+        const argc   = (word & 0xFFFF);
+        const fnIdx  = view.getInt32(pos+4,true);
+        const sv = S.parsed['STRG'];
+        const fnName = sv && sv[fnIdx] ? sv[fnIdx].value : `fn[${fnIdx}]`;
+        operand = `${fnName}(${argc})`;
+        advance = 8;
+      }
+    } else if (op === 0x9C || op === 0x9D || op === 0x9E) {
+      if (pos + 8 <= end) { operand = `+${view.getInt32(pos+4,true)}`; advance = 8; }
+    }
+
+    const typeSuffix = t1 !== 0 ? `.${GML_TYPES[t1]||t1}` : '';
+    lines.push({ num: lineNum, addr: (pos - base).toString(16).padStart(4,'0'), op: opName+typeSuffix, operand });
+    pos += advance;
+    lineNum++;
+  }
+
+  if (lineNum >= 500) lines.push({ num:lineNum, addr:'…', op:'[truncated]', operand:'' });
+  return lines;
+}
+
+// ─────────────────────────────────────────────
+//  BUILD UI
+// ─────────────────────────────────────────────
+const CHUNK_GROUPS = {
+  Core:  ['GEN8','OPTN','LANG','EXTN'],
+  Assets:['SPRT','BGND','SOND','FONT','PATH','SCPT','SHDR','TMLN','OBJT','ROOM'],
+  Data:  ['STRG','TPAG','TXTR','AUDO','EMBI','CODE','GLOB'],
+};
+const CHUNK_ICONS = {
+  GEN8:'◈', STRG:'◆', SPRT:'◉', OBJT:'⬡', ROOM:'⬢', TPAG:'▣',
+  SOND:'♫', SCPT:'⟨⟩', CODE:'⚙', BGND:'▤', FONT:'A', PATH:'↝',
+  TXTR:'▦', TMLN:'◷', SHDR:'✦', EXTN:'⬛', AUDO:'▶', EMBI:'◼',
+  OPTN:'⚙', LANG:'◈', GLOB:'○',
+};
+
+function buildUI() {
+  document.getElementById('welcome').style.display  = 'none';
+  document.getElementById('sidebar').style.display  = 'flex';
+  document.getElementById('content').style.display  = 'flex';
+  document.getElementById('editor-panel').style.display = 'flex';
+  document.getElementById('tab-bar').style.display  = 'flex';
+  document.getElementById('btn-save').disabled      = false;
+  document.getElementById('btn-close').disabled     = false;
+  document.getElementById('btn-export-json').disabled = false;
+
+  const badge = document.getElementById('file-badge');
+  badge.textContent = S.fileName;
+  badge.style.display = 'inline';
+
+  document.getElementById('status-dot').className = 'dot green';
+  document.getElementById('status-text').textContent = `${S.fileName} · ${fmt(S.fileSize)}`;
+  document.getElementById('stat-size').textContent   = `${Object.keys(S.chunks).length} chunks`;
+
+  buildSidebar();
+  buildOverview();
+  buildGallery();
+  buildCodeView();
+  setupDiff();
+
+  switchTab('chunks');
+  const firstParsed = Object.keys(S.parsed)[0];
+  selectChunk(firstParsed || Object.keys(S.chunks)[0]);
+}
+
+function buildSidebar() {
+  const list = document.getElementById('chunk-list');
+  list.innerHTML = '';
+
+  const all = Array.from(new Set([...Object.keys(S.chunks), ...Object.keys(S.parsed)]));
+  const grouped = {};
+  const usedGroupNames = [];
+
+  Object.entries(CHUNK_GROUPS).forEach(([g, names]) => {
+    const matches = names.filter(n => all.includes(n));
+    if (matches.length) { grouped[g] = matches; usedGroupNames.push(g); }
+  });
+
+  const ungrouped = all.filter(n => !Object.values(CHUNK_GROUPS).flat().includes(n));
+  if (ungrouped.length) { grouped['Other'] = ungrouped; usedGroupNames.push('Other'); }
+
+  usedGroupNames.forEach(g => {
+    const grp = document.createElement('div');
+    grp.className = 'chunk-group';
+    grp.innerHTML = `<div class="chunk-group-label">${g}</div>`;
+    grouped[g].forEach(name => {
+      const p   = S.parsed[name];
+      const cnt = p ? p.length : '?';
+      const icon = CHUNK_ICONS[name] || '◈';
+      const el  = document.createElement('div');
+      el.className = 'sidebar-item';
+      el.id = `si-${name}`;
+      el.innerHTML = `<span class="chunk-icon">${icon}</span><span>${name}</span><span class="sidebar-badge">${cnt}</span>`;
+      el.onclick = () => selectChunk(name);
+      grp.appendChild(el);
+    });
+    list.appendChild(grp);
+  });
+}
+
+function buildOverview() {
+  const gen8 = S.parsed['GEN8'];
+  const gen8el = document.getElementById('gen8-grid');
+  gen8el.innerHTML = '';
+  if (gen8) {
+    gen8.forEach(e => {
+      gen8el.innerHTML += `<div class="gen8-cell"><div class="gen8-key">${esc(e.name)}</div><div class="gen8-val">${esc(e.value)}</div></div>`;
+    });
+  }
+
+  const grid = document.getElementById('overview-grid');
+  grid.innerHTML = '';
+  const counts = [
+    ['SPRT','◉','Sprites'], ['OBJT','⬡','Objects'], ['ROOM','⬢','Rooms'],
+    ['SOND','♫','Sounds'],  ['STRG','◆','Strings'],  ['SCPT','⟨⟩','Scripts'],
+    ['TPAG','▣','TexPages'], ['CODE','⚙','Code blocks'], ['FONT','A','Fonts'],
+  ];
+  counts.forEach(([k, icon, label]) => {
+    const p = S.parsed[k];
+    if (!p) return;
+    grid.innerHTML += `<div class="ov-card">
+      <div class="ov-card-icon">${icon}</div>
+      <div class="ov-card-label">${label}</div>
+      <div class="ov-card-value">${p.length.toLocaleString()}</div>
+      <div class="ov-card-sub">${fmt(S.chunks[k]?.length||0)}</div>
+    </div>`;
+  });
+
+  const pills = document.getElementById('chunk-map-pills');
+  pills.innerHTML = '';
+  Object.keys(S.chunks).forEach(name => {
+    const el = document.createElement('span');
+    el.className = 'chunk-pill';
+    el.textContent = name;
+    el.title = `${fmt(S.chunks[name].length)} · offset 0x${S.chunks[name].offset.toString(16).toUpperCase()}`;
+    el.onclick = () => { switchTab('chunks'); selectChunk(name); };
+    pills.appendChild(el);
+  });
+}
+
+function buildGallery() {
+  const wrap = document.getElementById('gallery-view');
+  wrap.innerHTML = '';
+  if (!S.texUrls.length) {
+    wrap.innerHTML = '<div style="color:var(--text3);font-family:var(--font-mono);font-size:12px;padding:24px;">No TXTR chunk found in this file</div>';
+    return;
+  }
+  S.texUrls.forEach((url, i) => {
+    if (!url) return;
+    const el = document.createElement('div');
+    el.className = 'gallery-item';
+    el.innerHTML = `<div class="gallery-img-wrap"><img src="${url}" loading="lazy" alt="sheet ${i}"></div>
+      <div class="gallery-label">Sheet ${i} · <button class="row-btn" style="opacity:1;" onclick="downloadTexture(${i})">⬇ PNG</button></div>`;
+    wrap.appendChild(el);
+  });
+}
+
+function downloadTexture(i) {
+  if (!S.texUrls[i]) return;
+  const a = document.createElement('a');
+  a.href = S.texUrls[i];
+  a.download = `texture_sheet_${i}.png`;
+  a.click();
+  notify(`Downloading texture sheet ${i}`, 'ok');
+}
+
+function buildCodeView() {
+  const blocks = document.getElementById('code-blocks');
+  blocks.innerHTML = '';
+  const code = S.parsed['CODE'];
+  if (!code || !code.length) {
+    blocks.innerHTML = '<div style="color:var(--text3);font-size:12px;font-family:var(--font-mono);">No CODE chunk in this file</div>';
+    return;
+  }
+  code.slice(0, 100).forEach(entry => {
+    if (!entry._disasm) return;
+    const lines = entry._disasm.map((l,i) =>
+      `<span class="gml-line-num">${String(i).padStart(3,'0')}</span><span style="color:var(--bolt);margin-right:12px">0x${l.addr}</span><span class="gml-kw">${esc(l.op)}</span>${l.operand ? `  <span class="gml-num">${esc(l.operand)}</span>` : ''}\n`
+    ).join('');
+
+    blocks.innerHTML += `<div class="code-block" style="margin-bottom:8px;">
+      <div class="code-block-head">
+        <span class="code-block-name">${esc(entry.name)}</span>
+        <span class="code-block-meta">${esc(entry.value)}</span>
+      </div>
+      <div class="code-body">${lines}</div>
+    </div>`;
+  });
+  if (code.length > 100) {
+    blocks.innerHTML += `<div style="color:var(--text3);font-family:var(--font-mono);font-size:11px;text-align:center;padding:12px;">… ${code.length - 100} more code blocks (use chunk browser)</div>`;
+  }
+}
+
+function setupDiff() {
+  document.getElementById('diff-a-name').textContent = S.fileName;
+}
+
+// ─────────────────────────────────────────────
+//  TABS
+// ─────────────────────────────────────────────
+function switchTab(tab) {
+  S.activeTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+
+  const toolbar      = document.getElementById('toolbar');
+  const chunkBar     = document.getElementById('chunk-bar');
+  const tableWrap    = document.getElementById('table-wrap');
+  const overviewView = document.getElementById('overview-view');
+  const galleryView  = document.getElementById('gallery-view');
+  const codeView     = document.getElementById('code-view');
+  const diffView     = document.getElementById('diff-view');
+  const sidebar      = document.getElementById('sidebar');
+  const editorPanel  = document.getElementById('editor-panel');
+
+  // Reset visibility
+  [toolbar,chunkBar,tableWrap,overviewView,galleryView,codeView,diffView].forEach(el => el.style.display = 'none');
+  sidebar.style.display     = 'none';
+  editorPanel.style.display = 'none';
+
+  if (tab === 'chunks') {
+    sidebar.style.display     = 'flex';
+    editorPanel.style.display = 'flex';
+    toolbar.style.display     = 'flex';
+    chunkBar.style.display    = 'flex';
+    tableWrap.style.display   = 'block';
+  } else if (tab === 'overview') {
+    overviewView.style.display = 'flex';
+  } else if (tab === 'gallery') {
+    galleryView.style.display = 'flex';
+  } else if (tab === 'code') {
+    codeView.style.display = 'flex';
+  } else if (tab === 'diff') {
+    diffView.style.display = 'flex';
+  }
+}
+
+// ─────────────────────────────────────────────
+//  CHUNK SELECT
+// ─────────────────────────────────────────────
+function selectChunk(name) {
+  document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
+  const si = document.getElementById(`si-${name}`);
+  if (si) si.classList.add('active');
+
+  S.activeChunk = name;
+  const parsed  = S.parsed[name];
+  S.entries     = parsed || [];
+
+  const ch = S.chunks[name];
+  document.getElementById('cb-name').textContent   = name;
+  document.getElementById('cb-count').textContent  = `${S.entries.length} items`;
+  document.getElementById('cb-offset').textContent = ch ? `0x${ch.offset.toString(16).toUpperCase()}` : 'virtual';
+  document.getElementById('cb-size').textContent   = ch ? fmt(ch.length) : '—';
+  document.getElementById('chunk-bar').style.display = 'flex';
+
+  document.getElementById('search-input').value = '';
+  filterTable();
+  closeEditor();
+}
+
+// ─────────────────────────────────────────────
+//  TABLE
+// ─────────────────────────────────────────────
+function filterTable() {
+  const q = document.getElementById('search-input').value.toLowerCase();
+  S.filtered = q
+    ? S.entries.filter(e => e.name.toLowerCase().includes(q) || String(e.value).toLowerCase().includes(q))
+    : S.entries;
+  renderTable();
+}
+
+function renderTable() {
+  const tbody = document.getElementById('table-body');
+  const noRes = document.getElementById('no-results');
+
+  if (!S.filtered.length) {
+    tbody.innerHTML = '';
+    noRes.style.display = 'block';
+    document.getElementById('tab-info').textContent = '0 entries';
+    return;
+  }
+  noRes.style.display = 'none';
+  document.getElementById('tab-info').textContent = `${S.filtered.length} entries`;
+
+  const limit = 2000;
+  let html = '';
+  for (let i = 0; i < Math.min(S.filtered.length, limit); i++) {
+    const e   = S.filtered[i];
+    const mod = S.mods[`${S.activeChunk}:${e.index}`];
+    const val = esc(mod ? mod.value : String(e.value));
+    const sel = S.selected && S.selected.index === e.index;
+    html += `<tr class="${sel?'selected':''} ${mod?'modified':''}" onclick="selectEntry(${e.index})">
+      <td class="cell-idx">${e.index}</td>
+      <td class="cell-type"><span class="type-badge type-${e.type}">${e.type}</span></td>
+      <td class="cell-name" title="${esc(e.name)}">${esc(e.name)}</td>
+      <td class="cell-val"  title="${val}">${val}</td>
+      <td class="cell-act"><button class="row-btn" onclick="event.stopPropagation();selectEntry(${e.index})">edit</button></td>
+    </tr>`;
+  }
+  if (S.filtered.length > limit) {
+    html += `<tr><td colspan="5" style="text-align:center;padding:10px;color:var(--text3);font-family:var(--font-mono);font-size:10px;">… ${S.filtered.length - limit} more — use search to narrow down</td></tr>`;
+  }
+  tbody.innerHTML = html;
+}
+
+// ─────────────────────────────────────────────
+//  EDITOR
+// ─────────────────────────────────────────────
+function selectEntry(idx) {
+  const entry = S.entries.find(e => e.index === idx);
+  if (!entry) return;
+  S.selected = entry;
+
+  document.querySelectorAll('#table-body tr').forEach(tr => tr.classList.remove('selected'));
+  for (const row of document.querySelectorAll('#table-body tr')) {
+    if (row.cells[0] && parseInt(row.cells[0].textContent) === idx) { row.classList.add('selected'); break; }
+  }
+
+  const mod = S.mods[`${S.activeChunk}:${idx}`];
+  const cur = mod ? mod.value : entry.value;
+  S.editBuf = { value: cur, name: entry.name };
+
+  document.getElementById('editor-title').textContent = entry.name;
+  document.getElementById('editor-meta').textContent  = `${S.activeChunk} · #${idx} · ${entry.type}`;
+  document.getElementById('editor-foot').style.display = 'flex';
+
+  let html = '';
+
+  if (mod) html += `<div class="mod-banner show">⚠ Unsaved modification</div>`;
+
+  if (entry.offset !== undefined) {
+    html += field('Offset', `<input class="field-input readonly" readonly value="0x${entry.offset.toString(16).toUpperCase()}">`);
+  }
+
+  if (entry.type === 'string') {
+    const big = cur.length > 80 || String(cur).includes('\n');
+    html += field('String value',
+      big ? `<textarea class="field-input" id="ev" rows="6">${esc(String(cur))}</textarea>`
+          : `<input class="field-input" id="ev" value="${esc(String(cur))}">`
+    );
+    html += field('Byte length', `<input class="field-input readonly" readonly value="${String(cur).length}">`);
+
+  } else if (entry.type === 'texture') {
+    html += field('Bounds', `<input class="field-input" id="ev" value="${esc(String(cur))}">`);
+    html += `<div class="info-block">x:<b>${entry._x}</b>  y:<b>${entry._y}</b>  w:<b>${entry._w}</b>  h:<b>${entry._h}</b><br>Sheet ID: <b>${entry._ti}</b></div>`;
+    html += previewHtml('pc');
+    setTimeout(() => drawCanvas('pc', entry.offset), 40);
+
+  } else if (entry.type === 'sprite') {
+    html += field('Dimensions', `<input class="field-input" id="ev" value="${esc(String(cur))}">`);
+    html += `<div class="info-block">Size: <b>${entry._w}×${entry._h}</b><br>TPAG: <b>0x${(entry._tpagPtr||0).toString(16).toUpperCase()}</b></div>`;
+    if (entry._tpagPtr) { html += previewHtml('pc'); setTimeout(() => drawCanvas('pc', entry._tpagPtr), 40); }
+
+  } else if (entry.type === 'object' && entry._spriteIdx !== undefined) {
+    const spr = S.parsed['SPRT'] && S.parsed['SPRT'][entry._spriteIdx];
+    html += field('Sprite index', `<input class="field-input readonly" readonly value="${entry._spriteIdx}">`);
+    if (spr) {
+      html += `<div class="info-block">Linked sprite: <b>${esc(spr.name)}</b><br>Size: <b>${spr._w}×${spr._h}</b></div>`;
+      if (spr._tpagPtr) { html += previewHtml('pc'); setTimeout(() => drawCanvas('pc', spr._tpagPtr), 40); }
+    }
+    if (!document.getElementById('ev')) html += field('Value', `<input class="field-input" id="ev" value="${esc(String(cur))}">`);
+
+  } else if (entry._disasm) {
+    const lines = entry._disasm.slice(0,40).map((l,i) =>
+      `<span style="color:var(--text3);user-select:none;margin-right:10px">${String(i).padStart(3,'0')}</span><span style="color:var(--bolt)">${l.op}</span>${l.operand?` <span style="color:var(--cyan)">${esc(l.operand)}</span>`:''}\n`
+    ).join('');
+    html += field('Disassembly', `<div class="hex-block" style="max-height:200px;overflow-y:auto;white-space:pre;line-height:1.7;">${lines}</div>`);
+    html += field('Value', `<input class="field-input" id="ev" value="${esc(String(cur))}">`);
+
+  } else {
+    html += field('Value', `<input class="field-input" id="ev" value="${esc(String(cur))}">`);
+  }
+
+  // Raw hex
+  if (entry.offset !== undefined && S.rawBuffer) {
+    const sl  = new Uint8Array(S.rawBuffer, Math.min(entry.offset, S.rawBuffer.byteLength - 1), Math.min(16, S.rawBuffer.byteLength - entry.offset));
+    const hex = Array.from(sl).map((b,i) => `<span class="hex-byte">${b.toString(16).padStart(2,'0')}</span>`).join('');
+    html += field('Raw bytes (16)', `<div class="hex-block">${hex}</div>`);
+  }
+
+  document.getElementById('editor-body').innerHTML = html;
+}
+
+function field(label, content) {
+  return `<div class="field"><div class="field-label">${label}</div>${content}</div>`;
+}
+function previewHtml(id) {
+  return `<div class="field"><div class="field-label">Preview</div><div class="preview-box"><canvas id="${id}"></canvas></div></div>`;
+}
+function drawCanvas(id, tpag) {
+  const canvas = document.getElementById(id);
+  if (!canvas || !S.rawBuffer || tpag + 22 > S.rawBuffer.byteLength) return;
+  const v = new DataView(S.rawBuffer);
+  const sx=v.getUint16(tpag,true),sy=v.getUint16(tpag+2,true);
+  const sw=v.getUint16(tpag+4,true),sh=v.getUint16(tpag+6,true);
+  const ti=v.getUint16(tpag+20,true);
+  if (!S.texUrls[ti]) return;
+  const img = new Image();
+  img.onload = () => {
+    canvas.width=sw; canvas.height=sh;
+    canvas.getContext('2d').drawImage(img,sx,sy,sw,sh,0,0,sw,sh);
+  };
+  img.src = S.texUrls[ti];
+}
+
+function saveEdit() {
+  if (!S.selected) return;
+  const input = document.getElementById('ev');
+  if (!input) return;
+  const key = `${S.activeChunk}:${S.selected.index}`;
+  S.mods[key] = { value: input.value, original: S.selected.value, chunk: S.activeChunk, index: S.selected.index };
+  const entry = S.entries.find(e => e.index === S.selected.index);
+  if (entry) entry.value = input.value;
+  updateModCount();
+  renderTable();
+  notify(`Saved — ${S.selected.name}`, 'ok');
+}
+
+function discardEdit() {
+  if (!S.selected) return;
+  delete S.mods[`${S.activeChunk}:${S.selected.index}`];
+  filterTable();
+  closeEditor();
+  updateModCount();
+  notify('Edit discarded', '');
+}
+
+function deleteEntry() {
+  if (!S.selected) return;
+  if (!confirm(`Delete "${S.selected.name}"? This cannot be undone.`)) return;
+  S.entries   = S.entries.filter(e => e.index !== S.selected.index);
+  S.filtered  = S.filtered.filter(e => e.index !== S.selected.index);
+  closeEditor();
+  filterTable();
+  notify(`Deleted ${S.selected.name}`, 'warn');
+}
+
+function addEntry() {
+  const name  = prompt('Entry name:');
+  if (!name) return;
+  const value = prompt('Entry value:') || '';
+  const idx   = S.entries.length ? Math.max(...S.entries.map(e => e.index)) + 1 : 0;
+  S.entries.push({ index:idx, type:'string', name, value, offset:undefined });
+  filterTable();
+  selectEntry(idx);
+  notify(`Added "${name}"`, 'ok');
+}
+
+function closeEditor() {
+  S.selected = null;
+  document.getElementById('editor-body').innerHTML = `<div style="text-align:center;padding:28px 12px;color:var(--text3);font-size:11px;font-family:var(--font-mono);">Click any row to inspect</div>`;
+  document.getElementById('editor-foot').style.display = 'none';
+  document.getElementById('editor-title').textContent = 'Entry editor';
+  document.getElementById('editor-meta').textContent  = 'Select a row to edit';
+}
+
+function updateModCount() {
+  const n = Object.keys(S.mods).length;
+  document.getElementById('stat-mods').style.display = n ? 'flex' : 'none';
+  document.getElementById('stat-mods-text').textContent = `${n} modification${n!==1?'s':''}`;
+}
+
+// ─────────────────────────────────────────────
+//  EXPORT
+// ─────────────────────────────────────────────
+function exportFile() {
+  if (!S.rawBuffer) return;
+  const modCount = Object.keys(S.mods).length;
+
+  if (!modCount) { downloadBlob(new Blob([S.rawBuffer]), S.fileName); notify('Exported (no modifications)', ''); return; }
+
+  let buf  = S.rawBuffer.slice(0);
+  const u8 = new Uint8Array(buf);
+  const v  = new DataView(buf);
+  let ok   = 0;
+
+  for (const mod of Object.values(S.mods)) {
+    if (mod.chunk !== 'STRG') { ok++; continue; }
+    const sc = S.chunks['STRG'];
+    if (!sc) continue;
+    const base  = sc.offset;
+    const count = v.getUint32(base, true);
+    if (mod.index >= count) continue;
+    const pOff  = base + 4 + mod.index * 4;
+    const sPtr  = v.getUint32(pOff, true);
+    const oldLen = v.getUint32(sPtr, true);
+    const nb    = new TextEncoder().encode(mod.value);
+    const write = Math.min(nb.length, oldLen);
+    for (let i = 0; i < write; i++) u8[sPtr+4+i] = nb[i];
+    if (nb.length < oldLen) for (let i = nb.length; i < oldLen; i++) u8[sPtr+4+i] = 0;
+    v.setUint32(sPtr, write, true);
+    ok++;
+  }
+
+  const name = S.fileName.replace(/(\.[^.]+)$/, '_modified$1');
+  downloadBlob(new Blob([buf]), name);
+  notify(`Exported ${name} · ${ok} modification(s)`, 'ok');
+}
+
+function exportJSON() {
+  if (!S.rawBuffer) return;
+  const data = {};
+  Object.entries(S.parsed).forEach(([k, entries]) => {
+    data[k] = entries.map(e => ({ index:e.index, name:e.name, type:e.type, value:e.value }));
+  });
+  data._meta = { file: S.fileName, size: S.fileSize, chunks: Object.keys(S.chunks), exported: new Date().toISOString() };
+  downloadBlob(new Blob([JSON.stringify(data, null, 2)], { type:'application/json' }), S.fileName + '.json');
+  notify(`Exported full JSON — ${Object.keys(S.parsed).length} chunks`, 'ok');
+}
+
+function exportChunkJSON() {
+  if (!S.activeChunk) return;
+  const entries = S.parsed[S.activeChunk] || [];
+  const data = entries.map(e => ({ index:e.index, name:e.name, type:e.type, value:e.value }));
+  downloadBlob(new Blob([JSON.stringify(data, null, 2)], { type:'application/json' }), `${S.activeChunk}.json`);
+  notify(`Exported ${S.activeChunk}.json — ${data.length} entries`, 'ok');
+}
+
+function downloadBlob(blob, name) {
+  const url = URL.createObjectURL(blob);
+  const a   = Object.assign(document.createElement('a'), { href:url, download:name });
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// ─────────────────────────────────────────────
+//  DIFF
+// ─────────────────────────────────────────────
+function loadDiffB() {
+  const inp = Object.assign(document.createElement('input'), { type:'file', accept:'*' });
+  inp.onchange = e => {
+    const f = e.target.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = re => {
+      S.diffB     = re.target.result;
+      S.diffBName = f.name;
+      document.getElementById('diff-b-zone').className = 'diff-dropzone loaded';
+      document.getElementById('diff-b-zone').innerHTML = `<span>${esc(f.name)}</span>`;
+      populateDiffChunks();
+      document.getElementById('diff-controls').style.display = 'flex';
+      notify(`Loaded ${f.name} for diff`, 'ok');
+    };
+    reader.readAsArrayBuffer(f);
+  };
+  inp.click();
+}
+
+function populateDiffChunks() {
+  const sel = document.getElementById('diff-chunk-sel');
+  sel.innerHTML = Object.keys(S.parsed).map(k => `<option value="${k}">${k}</option>`).join('');
+}
+
+function runDiff() {
+  if (!S.diffB) return;
+  const chunkName = document.getElementById('diff-chunk-sel').value;
+  const aEntries  = (S.parsed[chunkName] || []);
+
+  // Parse B minimally for the same chunk
+  const bView = new DataView(S.diffB);
+  const bu8   = new Uint8Array(S.diffB);
+  function bStr(off) {
+    let e = off; while (e < bu8.length && bu8[e] !== 0) e++;
+    return new TextDecoder().decode(bu8.slice(off, e));
+  }
+
+  const bChunks = {};
+  let pos = 8;
+  while (pos < S.diffB.byteLength - 8) {
+    try {
+      const name = String.fromCharCode(bu8[pos],bu8[pos+1],bu8[pos+2],bu8[pos+3]);
+      const len  = bView.getUint32(pos+4, true);
+      if (!len || len > S.diffB.byteLength || !/^[A-Z0-9]{4}$/.test(name)) break;
+      bChunks[name] = { offset: pos+8, length: len };
+      pos += 8 + len;
+    } catch { break; }
+  }
+
+  const bEntries = [];
+  if (chunkName === 'STRG' && bChunks['STRG']) {
+    const base  = bChunks['STRG'].offset;
+    const count = bView.getUint32(base, true);
+    for (let i = 0; i < count && i < 200000; i++) {
+      const pOff = base + 4 + i * 4;
+      if (pOff + 4 > bu8.length) break;
+      const sPtr = bView.getUint32(pOff, true);
+      if (sPtr + 4 >= bu8.length) break;
+      const sLen = bView.getUint32(sPtr, true);
+      bEntries.push({ index:i, name:`string_${i}`, value: new TextDecoder().decode(bu8.slice(sPtr+4, sPtr+4+sLen)) });
+    }
+  }
+
+  const results = document.getElementById('diff-results');
+  results.innerHTML = '';
+  let diffCount = 0;
+
+  const maxLen = Math.max(aEntries.length, bEntries.length);
+  for (let i = 0; i < maxLen; i++) {
+    const a = aEntries[i];
+    const b = bEntries[i];
+    const av = a ? String(a.value) : '(missing)';
+    const bv = b ? String(b.value) : '(missing)';
+    if (av === bv) continue;
+    diffCount++;
+    results.innerHTML += `<div class="diff-row">
+      <div class="diff-cell label">${esc(a?.name || b?.name || `#${i}`)}</div>
+      <div class="diff-cell removed">${esc(av)}</div>
+      <div class="diff-cell added">${esc(bv)}</div>
+    </div>`;
+    if (diffCount >= 500) { results.innerHTML += `<div style="text-align:center;color:var(--text3);font-family:var(--font-mono);font-size:11px;padding:8px;">… more differences truncated</div>`; break; }
+  }
+
+  if (!diffCount) results.innerHTML = `<div style="text-align:center;color:var(--green);font-family:var(--font-mono);font-size:12px;padding:24px;">✓ No differences in ${chunkName}</div>`;
+  else notify(`${diffCount} difference${diffCount!==1?'s':''} in ${chunkName}`, 'warn');
+}
+
+// ─────────────────────────────────────────────
+//  CLOSE
+// ─────────────────────────────────────────────
+function closeFile() {
+  if (Object.keys(S.mods).length && !confirm('Unsaved modifications — close anyway?')) return;
+  S.texUrls.forEach(u => u && URL.revokeObjectURL(u));
+
+  Object.assign(S, {
+    rawBuffer:null, chunks:{}, parsed:{}, activeChunk:null,
+    entries:[], filtered:[], selected:null, mods:{},
+    texUrls:[], fileName:'', fileSize:0, diffB:null
+  });
+
+  document.getElementById('welcome').style.display   = 'flex';
+  document.getElementById('sidebar').style.display   = 'none';
+  document.getElementById('content').style.display   = 'none';
+  document.getElementById('editor-panel').style.display = 'none';
+  document.getElementById('tab-bar').style.display   = 'none';
+  ['btn-save','btn-close','btn-export-json'].forEach(id => document.getElementById(id).disabled = true);
+  document.getElementById('file-badge').style.display = 'none';
+  document.getElementById('status-dot').className    = 'dot';
+  document.getElementById('status-text').textContent = 'No file loaded';
+  document.getElementById('stat-mods').style.display = 'none';
+  document.getElementById('stat-size').textContent   = '';
+  document.getElementById('table-body').innerHTML    = '';
+  document.getElementById('chunk-bar').style.display = 'none';
+}
+</script>
+</body>
+</html>
