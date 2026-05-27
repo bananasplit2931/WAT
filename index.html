@@ -609,6 +609,44 @@ textarea.field-input { min-height: 66px; line-height: 1.5; }
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 3px; }
+
+/* ── GAME THEME BANNER ───────────────────── */
+#game-banner {
+  display: none;
+  align-items: center;
+  gap: 5px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-glow);
+  padding: 2px 9px;
+  border-radius: 4px;
+  white-space: nowrap;
+  animation: gameBannerIn 0.3s ease;
+  letter-spacing: 0.2px;
+}
+#game-banner.visible { display: flex; }
+#game-banner .gb-emoji { font-size: 13px; line-height: 1; }
+#game-banner .gb-name { opacity: 0.9; }
+@keyframes gameBannerIn {
+  from { opacity: 0; transform: translateY(-4px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── GAME WELCOME OVERRIDE ───────────────── */
+#welcome-game-hint {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--accent);
+  opacity: 0.7;
+  margin-top: 8px;
+  min-height: 16px;
+  font-style: italic;
+  letter-spacing: 0.3px;
+  transition: opacity 0.3s;
+}
 </style>
 </head>
 <body>
@@ -627,6 +665,7 @@ textarea.field-input { min-height: 66px; line-height: 1.5; }
   </div>
   <div class="topbar-sep"></div>
   <span id="file-badge">no file</span>
+  <div id="game-banner" title="Detected game"><span class="gb-emoji"></span><span class="gb-name"></span></div>
   <div class="topbar-actions">
     <button class="btn" onclick="triggerOpen()">
       <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 4h4l2-2h6a1 1 0 011 1v9a1 1 0 01-1 1H2a1 1 0 01-1-1V5a1 1 0 011-1z"/></svg>
@@ -675,10 +714,11 @@ textarea.field-input { min-height: 66px; line-height: 1.5; }
     <div class="welcome-drop" onclick="triggerOpen()">
       <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.4" opacity="0.75"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
       <div>
-        <div class="welcome-drop-title">Drop or open data.win</div>
+        <div class="welcome-drop-title" id="welcome-drop-title">Drop or open data.win</div>
         <div class="welcome-drop-sub">All GameMaker bytecode versions supported</div>
       </div>
     </div>
+    <div id="welcome-game-hint"></div>
   </div>
 
   <!-- DROP OVERLAY -->
